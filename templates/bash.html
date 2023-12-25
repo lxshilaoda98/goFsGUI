@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Terminal</title>
+    <style>
+        body {
+            font-family: monospace;
+            background-color: black;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        #terminal {
+            height: 500px;
+            overflow-y: scroll;
+            border: 1px solid #555;
+            padding: 10px;
+        }
+        #input {
+            width: calc(100% - 22px);
+            border: none;
+            background-color: black;
+            color: white;
+            font-family: monospace;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+<label>HTTP：</label>
+<input type="text" id="HTTPURL" value="http://127.0.0.1:1225">
+
+<label>socketIP：</label>
+<input type="text" id="socketIP" value="">
+<label>socketPort：</label>
+<input type="text" id="socketPort" value="">
+<label>socketpw：</label>
+<input type="password" id="socketpw" value="">
+<br>
+<br>
+<br>
+<br>
+<br>
+<div id="terminal"></div>
+<input type="text" id="input" autofocus onkeydown="handleInput(event)">
+<script>
+    async function hashPassword(password) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+    }
+    function base64EncodeObject(object) {
+        const jsonString = JSON.stringify(object);
+        return btoa(jsonString);
+    }
+    function handleInput(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            processCommand();
+        }
+    }
+
+    async function processCommand() {
+        var inputElement = document.getElementById("input");
+        var terminalElement = document.getElementById("terminal");
+        var command = inputElement.value;
+        inputElement.value = "";
+
+        var ip = document.getElementById("socketIP").value;
+        var port = document.getElementById("socketPort").value;
+        var pwd = document.getElementById("socketpw").value;
+        let HTTPURL =  document.getElementById("HTTPURL").value;
+
+        let sub = {"fshost": ip, "fsport": port, "fspasswod": pwd,"command":encodeURIComponent(command)}
+
+        var base64Sub = base64EncodeObject(sub);
+
+        // 检查是否为 clear 命令
+        if (command.toLowerCase() === "clear") {
+            // 清空终端
+            terminalElement.innerHTML = "";
+        } else {
+            // 发起 HTTP 请求
+            fetch(HTTPURL+"/fscli?body=" +base64Sub)
+                .then(response => response.text())
+                .then(output => {
+                    // 显示结果到终端
+                    terminalElement.innerHTML += "Command: " + command + "<br>";
+                    terminalElement.innerHTML += output.replace(/\n/g, "<br>") + "<br>";
+
+                    // 滚动到底部
+                    terminalElement.scrollTop = terminalElement.scrollHeight;
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                });
+        }
+    }
+</script>
+</body>
+</html>
