@@ -24,14 +24,15 @@ func ConnectionFS(fsGUIInput *FsGUIInput) (client *eventsocket.Connection, err e
 }
 
 func FsApi(fsGUIInput *FsGUIInput) (jsonStr string, err error) {
-	client, err := ConnectionFS(fsGUIInput)
-	if err != nil {
+	client, errc := ConnectionFS(fsGUIInput)
+	if errc != nil {
 		fmt.Println("[FsApi]连接fs失败")
 	} else {
 		event, err := client.Send(fmt.Sprintf("api %s %s", fsGUIInput.Command, ""))
 		fmt.Println("[FsApi]发送信息>>>>", fmt.Sprintf("api %s", fsGUIInput.Command))
 		if err != nil {
 			fmt.Println("[FsApi]运行esl comment Err..>", err)
+			jsonStr = err.Error()
 		} else {
 			jsonStr = event.Body
 		}

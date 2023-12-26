@@ -17,14 +17,26 @@
             overflow-y: scroll;
             border: 1px solid #555;
             padding: 10px;
+            margin-bottom: 10px;
         }
         #input {
+            /*width: calc(100% - 22px);*/
+            /*border: none;*/
+            /*background-color: black;*/
+            /*color: white;*/
+            /*font-family: monospace;*/
+            /*outline: none;*/
+
             width: calc(100% - 22px);
-            border: none;
+            border: 2px solid #00ff00; /* 边框颜色：绿色 */
             background-color: black;
             color: white;
             font-family: monospace;
             outline: none;
+            margin-bottom: 10px;
+            padding: 10px; /* 内边距 */
+            font-size: 16px; /* 字体大小 */
+            box-sizing: border-box; /* 使内边距和边框不增加元素的尺寸 */
         }
     </style>
 </head>
@@ -44,8 +56,36 @@
 <br>
 <br>
 <div id="terminal"></div>
+<button onclick="toggleCommandModal()" >Show Command</button>
+<div id="commandModal" style="display: none">
+    <h2>Command Examples:</h2>
+<!--    <h3>sofia 命令:</h3>-->
+    <p ondblclick="fillInput({{.help}})">{{.help}}</p>
+    <p ondblclick="fillInput({{.fs_version}})">{{.fs_version}}</p>
+    <p ondblclick="fillInput({{.fs_sofia_status}})">{{.fs_sofia_status}}</p>
+    <p ondblclick="fillInput({{.http_clear_cache}})">{{.http_clear_cache}}</p>
+    <p ondblclick="fillInput({{.xml_flush_cache}})">{{.xml_flush_cache}}</p>
+    <p ondblclick="fillInput({{.xml_flush_cache_sipone}})">{{.xml_flush_cache_sipone}}</p>
+    <p ondblclick="fillInput({{.fsctl_flush_db_handles}})">{{.fsctl_flush_db_handles}}</p>
+    <p ondblclick="fillInput({{.module_exists}})">{{.module_exists}}</p>
+    <p ondblclick="fillInput({{.bridgeUser}})">{{.bridgeUser}}</p>
+    <p ondblclick="fillInput({{.bridgetoUser}})">{{.bridgetoUser}}</p>
+
+    <!-- Add more example commands as needed -->
+</div>
 <input type="text" id="input" autofocus onkeydown="handleInput(event)">
 <script>
+    var commandHistory = []; // 保存输入历史
+    var currentIndex = 0;    // 当前历史索引
+
+    function fillInput(value) {
+        let inputElement = document.getElementById("input");
+        inputElement.value = value.split(":")[0];
+    }
+    function toggleCommandModal() {
+        var commandModal = document.getElementById("commandModal");
+        commandModal.style.display = commandModal.style.display === "none" ? "block" : "none";
+    }
     async function hashPassword(password) {
         const encoder = new TextEncoder();
         const data = encoder.encode(password);
@@ -58,9 +98,25 @@
         return btoa(jsonString);
     }
     function handleInput(event) {
+        let inputElement = document.getElementById("input");
         if (event.key === "Enter") {
-            event.preventDefault();
-            processCommand();
+            //event.preventDefault();
+            if (inputElement.value!==""){
+                commandHistory.unshift(inputElement.value); // 将输入添加到历史
+                processCommand();
+            }
+        }else if (event.key === "ArrowUp") {
+            // 按上箭头键显示上一条历史记录
+            if (currentIndex < commandHistory.length) {
+                inputElement.value = commandHistory[currentIndex];
+                currentIndex++;
+            }
+        }else if (event.key === "ArrowDown") {
+            // 按下箭头键显示下一条历史记录
+            if (currentIndex > 0) {
+                currentIndex--;
+                inputElement.value = currentIndex === 0 ? "" : commandHistory[currentIndex - 1];
+            }
         }
     }
 
@@ -83,7 +139,7 @@
         if (command.toLowerCase() === "clear") {
             // 清空终端
             terminalElement.innerHTML = "";
-        } else {
+        } else if (command.toLowerCase() !== "") {
             // 发起 HTTP 请求
             fetch(HTTPURL+"/fscli?body=" +base64Sub)
                 .then(response => response.text())

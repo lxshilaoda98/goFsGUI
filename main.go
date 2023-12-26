@@ -55,7 +55,21 @@ func main() {
 	//router.LoadHTMLFiles("templates/template1.html", "templates/template2.html")
 	router.GET("/index", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "bash.html", gin.H{
-			"title": "Main website",
+			"title":           "Main website",
+			"fs_version":      "version:查看版本号",
+			"fs_sofia_status": "sofia status:查看sofia信息",
+			//http_cache
+			"http_clear_cache": "http_clear_cache:清理http缓存",
+			//http_xml_curl
+			"xml_flush_cache":        "xml_flush_cache:清理xml缓存",
+			"xml_flush_cache_sipone": "xml_flush_cache id 1002 domain-name:清理单个缓存",
+			//mod_sofia
+			"fsctl_flush_db_handles": "fsctl flush_db_handles:关闭不再需要的数据库连接",
+			"help":                   "help:帮助",
+			//json {"command" : "status", "data" : ""} 返回json格式
+			"module_exists": "module_exists 模块名称:检查模块是否已加载",
+			"bridgeUser":    "originate user/分机号 &park():呼叫分机，并挂起",
+			"bridgetoUser":  "originate user/a分机号 &bridge(user/b分机号):先呼叫a，a接起后呼叫b",
 		})
 	})
 
